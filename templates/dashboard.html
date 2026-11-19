@@ -1,1 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Dashboard – Firewall Monitoring System{% endblock %}
 
+{% block content %}
+<h1 class="page-title">Traffic Dashboard</h1>
+
+<!-- Statistic Cards -->
+<div class="stats-grid">
+    <div class="stat-card total">
+        <div class="stat-value">{{ stats.total }}</div>
+        <div class="stat-label">Total Packets</div>
+    </div>
+    <div class="stat-card allowed">
+        <div class="stat-value">{{ stats.allowed }}</div>
+        <div class="stat-label">Allowed</div>
+    </div>
+    <div class="stat-card blocked">
+        <div class="stat-value">{{ stats.blocked }}</div>
+        <div class="stat-label">Blocked</div>
+    </div>
+    <div class="stat-card alerts">
+        <div class="stat-value">{{ stats.alerts }}</div>
+        <div class="stat-label">Security Alerts</div>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="action-bar">
+    <form action="{{ url_for('simulate') }}" method="POST" style="display:inline;">
+        <button type="submit" class="btn btn-primary">Simulate Traffic (20 packets)</button>
+    </form>
+    <form action="{{ url_for('clear_logs') }}" method="POST" style="display:inline;"
+          onsubmit="return confirm('Clear all logs and alerts?');">
+        <button type="submit" class="btn btn-danger">Clear Logs & Alerts</button>
+    </form>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Recent Packet Logs -->
+    <section class="panel logs-panel">
+        <h2>Recent Packet Logs</h2>
+        {% if logs %}
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Src IP</th>
+                        <th>Dst IP</th>
+                        <th>Port</th>
+                        <th>Proto</th>
+                        <th>Type</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr class="{% if log.is_suspicious %}suspicious{% endif %}">
+                        <td>{{ log.timestamp }}</td>
+                        <td>
+                            {{ log.src_ip }}
+                            {% if log.is_suspicious %}<span class="badge badge-warn">SUS</span>{% endif %}
+                        </td>
+                        <td>{{ log.dst_ip }}</td>
+                        <td>{{ log.port }}</td>
+                        <td>{{ log.protocol }}</td>
+                        <td>{{ log.traffic_type }}</td>
+                        <td>
+                            {% if log.action == 'ALLOW' %}
+                                <span class="badge badge-allow">ALLOW</span>
+                            {% else %}
+                                <span class="badge badge-block">BLOCK</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="empty-msg">No traffic logged yet. Click <strong>Simulate Traffic</strong> to generate packets.</p>
+        {% endif %}
+    </section>
+
+    <!-- Security Alerts Panel -->
+    <section class="panel alerts-panel">
+        <h2>Security Alerts</h2>
+        {% if alerts %}
+        <ul class="alert-list">
+            {% for a in alerts %}
+            <li class="alert-item severity-{{ a.severity|lower }}">
+                <div class="alert-header">
+                    <span class="alert-type">{{ a.alert_type }}</span>
+                    <span class="alert-severity">{{ a.severity }}</span>
+                </div>
+                <div class="alert-desc">{{ a.description }}</div>
+                <div class="alert-time">{{ a.timestamp }}</div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty-msg">No alerts. Run multiple simulations to trigger DoS detection.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
