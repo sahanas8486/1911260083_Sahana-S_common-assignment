@@ -1,1 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Security Alerts – Firewall Monitoring System{% endblock %}
 
+{% block content %}
+<h1 class="page-title">Security Alerts</h1>
+
+<section class="panel">
+    {% if alerts %}
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Timestamp</th>
+                    <th>Type</th>
+                    <th>Severity</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in alerts %}
+                <tr class="severity-row-{{ a.severity|lower }}">
+                    <td>{{ a.id }}</td>
+                    <td>{{ a.timestamp }}</td>
+                    <td>{{ a.alert_type }}</td>
+                    <td>
+                        <span class="badge badge-{{ a.severity|lower }}">{{ a.severity }}</span>
+                    </td>
+                    <td>{{ a.description }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty-msg">
+        No security alerts yet.<br>
+        Simulate traffic several times so that a source IP accumulates 5+ blocked packets;
+        the DoS detection engine will then raise an alert.
+    </p>
+    {% endif %}
+</section>
+{% endblock %}
