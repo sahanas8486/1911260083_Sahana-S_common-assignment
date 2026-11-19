@@ -1,1 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Firewall Rules – Firewall Monitoring System{% endblock %}
 
+{% block content %}
+<h1 class="page-title">Firewall Rules</h1>
+
+<div class="action-bar">
+    <button class="btn btn-primary" onclick="document.getElementById('add-rule-form').classList.toggle('hidden')">
+        + Add New Rule
+    </button>
+</div>
+
+<!-- Add Rule Form -->
+<div id="add-rule-form" class="panel form-panel hidden">
+    <h2>Add New Firewall Rule</h2>
+    <form action="{{ url_for('add_rule') }}" method="POST" class="rule-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="name">Rule Name *</label>
+                <input type="text" id="name" name="name" required placeholder="e.g. Block Telnet">
+            </div>
+            <div class="form-group">
+                <label for="action">Action *</label>
+                <select id="action" name="action">
+                    <option value="ALLOW">ALLOW</option>
+                    <option value="BLOCK" selected>BLOCK</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="src_ip">Source IP (use * for any)</label>
+                <input type="text" id="src_ip" name="src_ip" placeholder="* or 192.168.1.* or specific IP">
+            </div>
+            <div class="form-group">
+                <label for="dst_ip">Destination IP (use * for any)</label>
+                <input type="text" id="dst_ip" name="dst_ip" placeholder="* or 192.168.1.10">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="port">Port (0 = any)</label>
+                <input type="number" id="port" name="port" value="0" min="0" max="65535">
+            </div>
+            <div class="form-group">
+                <label for="protocol">Protocol</label>
+                <select id="protocol" name="protocol">
+                    <option value="">Any ()</option>
+                    <option value="TCP">TCP</option>
+                    <option value="UDP">UDP</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Rule</button>
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('add-rule-form').classList.add('hidden')">Cancel</button>
+        </div>
+    </form>
+</div>
+
+<!-- Rules Table -->
+<section class="panel">
+    <h2>Current Rule Set <small>(evaluated in order – first match wins)</small></h2>
+    {% if rules %}
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Src IP</th>
+                    <th>Dst IP</th>
+                    <th>Port</th>
+                    <th>Protocol</th>
+                    <th>Action</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rule in rules %}
+                <tr>
+                    <td>{{ rule.id }}</td>
+                    <td>{{ rule.name }}</td>
+                    <td><code>{{ rule.src_ip }}</code></td>
+                    <td><code>{{ rule.dst_ip }}</code></td>
+                    <td>{{ rule.port if rule.port != 0 else 'Any' }}</td>
+                    <td>{{ rule.protocol }}</td>
+                    <td>
+                        {% if rule.action == 'ALLOW' %}
+                            <span class="badge badge-allow">ALLOW</span>
+                        {% else %}
+                            <span class="badge badge-block">BLOCK</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form action="{{ url_for('delete_rule', rule_id=rule.id) }}" method="POST"
+                              onsubmit="return confirm('Delete this rule?');" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="hint">
+        <strong>Note:</strong> Rules are matched top-to-bottom. Place more specific rules first.
+        Unmatched traffic is blocked by the implicit default-deny policy.
+    </p>
+    {% else %}
+    <p class="empty-msg">No rules defined. Add rules or restart the app to load defaults.</p>
+    {% endif %}
+</section>
+{% endblock %}
